@@ -24,3 +24,6 @@
 ## 개발 환경
 - Language: C++
 - Version Control: Git / GitHub
+
+- ## Merge
+- squash and merge
