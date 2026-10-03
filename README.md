@@ -13,6 +13,10 @@
 - 서울 데이터 허브 (Seoul Data Hub)
 - 서울시 공영주차장 안내 정보
 
+## 개발 환경
+- Language: C++
+- Version Control: Git / GitHub
+
 ## 주요 기능
 - 공영주차장 목록 조회
 - 자치구별 주차장 검색
@@ -60,7 +64,5 @@ feature/7-fee-sort
 fix/13-search-error
 docs/12-readme
 
-## 개발 환경
-- Language: C++
-- Version Control: Git / GitHub
+
 
