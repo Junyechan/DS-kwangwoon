@@ -1,0 +1,27 @@
+# C/C++ build files
+*.o
+*.obj
+*.exe
+*.out
+
+# Build directories
+build/
+Debug/
+Release/
+
+# Visual Studio
+.vs/
+x64/
+x86/
+
+# VS Code
+.vscode/
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
+# OS files
+.DS_Store
+Thumbs.db
