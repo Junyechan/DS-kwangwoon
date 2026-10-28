@@ -2,9 +2,7 @@
 #define DATA_LOADER_H
 
 #include <string>
-#include <vector>
-
-#include "parking.h"
+#include "parking_list.h"
 
 bool loadParkingData(
     const std::string& filename,
