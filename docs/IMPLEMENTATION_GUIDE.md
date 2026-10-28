@@ -17,7 +17,7 @@
         ↓
 Parking 객체 생성
         ↓
-Vector에 전체 데이터 저장
+Linked List에 전체 데이터 저장
         ↓
 검색 자료구조 구축
         ↓
