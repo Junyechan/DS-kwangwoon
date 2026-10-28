@@ -16,17 +16,4 @@ struct Parking
     std::string closeTime;
 };
 
-struct ParkingNode
-{
-    Parking data;
-    ParkingNode* next;
-};
-
-struct ParkingList
-{
-    ParkingNode* head;
-    ParkingNode* tail;
-    int size;
-};
-
 #endif
