@@ -1,16 +1,14 @@
 #ifndef SORT_H
 #define SORT_H
 
-#include <vector>
-
-#include "parking.h"
+#include "parking_list.h"
 
 void sortByFee(
-    std::vector<Parking>& parkingLots
+    ParkingList* list
 );
 
 void sortByCapacity(
-    std::vector<Parking>& parkingLots
+    ParkingList* list
 );
 
 #endif
