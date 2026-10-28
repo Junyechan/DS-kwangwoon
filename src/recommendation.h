@@ -1,12 +1,11 @@
 #ifndef RECOMMENDATION_H
 #define RECOMMENDATION_H
 
-#include <vector>
+#include "parking_list.h"
 
-#include "parking.h"
-
-std::vector<Parking> recommendTopNByFee(
-    const std::vector<Parking>& parkingLots,
+bool recommendTopNByFee(
+    const ParkingList* candidates,
+    ParkingList* result,
     int topN
 );
 
