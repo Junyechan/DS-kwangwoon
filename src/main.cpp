@@ -1,15 +1,35 @@
 #include <iostream>
-#include <vector>
 
 #include "parking.h"
-
-using namespace std;
+#include "parking_list.h"
+#include "data_loader.h"
+#include "search.h"
+#include "sort.h"
+#include "recommendation.h"
 
 int main()
 {
-    vector<Parking> parkingLots;
+    ParkingList parkingLots;
 
-    cout << "===== 서울시 공영주차장 안내 프로그램 =====" << endl;
+    createParkingList(&parkingLots);
+
+    if (!loadParkingData(
+            "data/parking.csv",
+            &parkingLots))
+    {
+        std::cout
+            << "데이터 로딩 실패\n";
+
+        return 1;
+    }
+
+    // 메뉴
+    // 검색
+    // 정렬
+    // 추천
+    // 출력
+
+    destroyParkingList(&parkingLots);
 
     return 0;
 }
