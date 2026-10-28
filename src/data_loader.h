@@ -6,8 +6,9 @@
 
 #include "parking.h"
 
-std::vector<Parking> loadParkingData(
-    const std::string& filename
+bool loadParkingData(
+    const std::string& filename,
+    ParkingList* list
 );
 
 #endif
