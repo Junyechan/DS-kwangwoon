@@ -11,4 +11,7 @@ void sortByCapacity(
     ParkingList* list
 );
 
+// 직전 sortByFee / sortByCapacity 호출에서 일어난 원소 비교 횟수
+long long getLastSortComparisons();
+
 #endif
