@@ -10,6 +10,8 @@ void buildSearchIndex(
     const ParkingList* list
 );
 
+// 결과 리스트 규칙: 검색 / 추천 함수는 result에 남아 있던 값을 먼저 비운다.
+
 // 자치구가 일치하는 주차장을 result에 복사한다.
 // 결과가 하나 이상이면 true
 bool searchByDistrict(
@@ -17,7 +19,7 @@ bool searchByDistrict(
     ParkingList* result
 );
 
-// 주차장명이 정확히 일치하는 주차장을 result에 복사한다.
+// 주차장명이 정확히 일치하는 주차장을 result에 복사한다. (result는 먼저 비움)
 bool searchByName(
     const std::string& name,
     ParkingList* result

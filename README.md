@@ -279,7 +279,8 @@ struct Parking
     std::string district;
 
     int capacity;
-    int basicFee;
+    int basicFee;   // 기본 주차 요금 (원본 그대로)
+    int hourlyFee;  // 1시간 주차 시 실제 요금, 모르면 FEE_UNKNOWN(-1)
 
     std::string openTime;
     std::string closeTime;
@@ -726,5 +727,5 @@ g++ -std=c++11 -Isrc tests/test_all.cpp src/parking_list.cpp src/data_loader.cpp
 - 원본 데이터 처리 규칙:
   - 두 번째 줄의 영문 컬럼명(`seq, prknglot_nm, ...`)은 건너뜁니다.
   - 노상 주차장은 주차면 1개당 1행으로 기록되어 있으므로, **같은 주차장코드의 행을 하나로 합치고 주차면수를 더합니다** (2,181행 → 842개).
-  - 기본 시간이 주차장마다 달라(5분, 10분, 30분 등) **`basicFee`는 1시간 주차 시 실제 요금(기본 요금 + 추가 단위 요금)으로 환산**합니다. 예: 기본 5분 280원, 추가 5분당 280원 → 3,360원.
+  - 기본 시간이 주차장마다 달라(5분, 10분, 30분 등) `basicFee`는 원본 기본 요금 그대로 두고, **1시간 주차 시 실제 요금(기본 요금 + 추가 단위 요금)은 `hourlyFee`에 따로 저장**합니다. 정렬과 Top-N 추천은 `hourlyFee`를 기준으로 합니다. 예: 기본 5분 280원, 추가 5분당 280원 → 3,360원.
 - 서울 데이터 허브 CSV는 보통 CP949(EUC-KR)로 저장되어 있으므로 **UTF-8로 다시 저장**해서 사용합니다. Windows 콘솔에서 한글이 깨지면 `chcp 65001`을 먼저 실행합니다.

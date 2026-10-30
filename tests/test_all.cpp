@@ -29,6 +29,7 @@ static Parking makeParking(const std::string& name, int fee, int capacity)
     p.district = "테스트구";
     p.capacity = capacity;
     p.basicFee = fee;
+    p.hourlyFee = fee;
     return p;
 }
 
@@ -249,6 +250,21 @@ static void testLoaderAndSearch()
     CHECK(!searchByDistrict("없는구", &result));
     CHECK(result.size == 0);
 
+    // 결과 리스트에 이전 값이 남아 있어도 검색 / 추천 함수가 먼저 비운다.
+    searchByDistrict("광진구", &result);
+    CHECK(searchByDistrict("광진구", &result));
+    CHECK(result.size == 5);
+    CHECK(!searchByDistrict("없는구", &result));
+    CHECK(result.size == 0);
+
+    ParkingList top;
+    createParkingList(&top);
+    searchByDistrict("광진구", &result);
+    recommendTopNByFee(&result, &top, 2);
+    CHECK(recommendTopNByFee(&result, &top, 2));
+    CHECK(top.size == 2);
+    destroyParkingList(&top);
+
     destroySearchIndex();
     destroyParkingList(&result);
     destroyParkingList(&all);
@@ -276,12 +292,12 @@ static void testRealData()
     CHECK(result.size == 1);
     CHECK(result.head->data.capacity == 84);
     CHECK(result.head->data.district == "영등포구");
-    CHECK(result.head->data.basicFee == 3360);  // 5분당 280원
+    CHECK(result.head->data.hourlyFee == 3360);  // 5분당 280원
     clearParkingList(&result);
 
     // 기본 시간 0분 + 5분당 100원 → 1시간 1200원 (예전에는 0원으로 무료처럼 보였음)
     CHECK(searchByName("쌍문2동 5공영주차장(구)", &result));
-    CHECK(result.size == 1 && result.head->data.basicFee == 1200);
+    CHECK(result.size == 1 && result.head->data.hourlyFee == 1200);
     clearParkingList(&result);
 
     CHECK(!searchByName("prknglot_nm", &result));
@@ -290,7 +306,7 @@ static void testRealData()
     int unknown = 0;
 
     for (ParkingNode* n = all.head; n != nullptr; n = n->next)
-        if (n->data.basicFee == FEE_UNKNOWN)
+        if (n->data.hourlyFee == FEE_UNKNOWN)
             unknown++;
 
     CHECK(unknown == 8);
@@ -339,9 +355,9 @@ static void testRecommend()
 
     CHECK(recommendTopNByFee(&list, &result, 3));
     CHECK(result.size == 3);
-    CHECK(result.head->data.basicFee == 500);
-    CHECK(result.head->next->data.basicFee == 800);
-    CHECK(result.tail->data.basicFee == 1000);
+    CHECK(result.head->data.hourlyFee == 500);
+    CHECK(result.head->next->data.hourlyFee == 800);
+    CHECK(result.tail->data.hourlyFee == 1000);
     clearParkingList(&result);
 
     CHECK(recommendTopNByFee(&list, &result, 100));

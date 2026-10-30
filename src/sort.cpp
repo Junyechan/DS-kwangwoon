@@ -11,13 +11,13 @@ static long long comparisonCount = 0;
 // 요금 정보 없는 주차장(FEE_UNKNOWN)은 요금과 상관없이 맨 뒤로 보낸다.
 static bool feeAscending(const Parking& a, const Parking& b)
 {
-    if (b.basicFee == FEE_UNKNOWN)
+    if (b.hourlyFee == FEE_UNKNOWN)
         return true;
 
-    if (a.basicFee == FEE_UNKNOWN)
+    if (a.hourlyFee == FEE_UNKNOWN)
         return false;
 
-    return a.basicFee <= b.basicFee;
+    return a.hourlyFee <= b.hourlyFee;
 }
 
 static bool capacityDescending(const Parking& a, const Parking& b)

@@ -101,6 +101,7 @@ static bool contains(const std::string& s, const char* key)
 // 각 필드로 인정하는 컬럼명 (서울 데이터 허브 원본명, 단순화한 이름)
 // 이름이 정확히 일치해야 하므로 "버스 기본 주차 요금" 같은 컬럼과 헷갈리지 않는다.
 static const char* const NAME_COLUMNS[] = { "주차장명", nullptr };
+static const char* const ENGLISH_NAME_COLUMN = "prknglot_nm";
 static const char* const CODE_COLUMNS[] = { "주차장코드", nullptr };
 static const char* const ADDRESS_COLUMNS[] = { "주소", nullptr };
 static const char* const DISTRICT_COLUMNS[] = { "자치구", nullptr };
@@ -211,7 +212,7 @@ static std::string formatTime(const std::string& s)
 // 1시간 주차했을 때 실제로 내는 요금.
 // 주차장마다 기본 시간(5분, 10분, 30분 ...)이 달라 기본 요금끼리는 비교할 수 없다.
 // 예: 기본 5분 280원 + 추가 5분당 280원 → 280 + 11 × 280 = 3360원
-static int hourlyFee(int basicFee, int basicTime, int addFee, int addTime)
+static int calcHourlyFee(int basicFee, int basicTime, int addFee, int addTime)
 {
     // 기본 시간이 1시간 이상이면 기본 요금이 곧 1시간 요금
     if (basicTime >= 60)
@@ -238,18 +239,6 @@ static int hourlyFee(int basicFee, int basicTime, int addFee, int addTime)
     int units = (remaining + addTime - 1) / addTime;  // 올림
 
     return basicFee + units * addFee;
-}
-
-// 한글 없이 ASCII로만 된 문자열인지 (원본 CSV 두 번째 줄의 영문 컬럼명 판별용)
-static bool isAscii(const std::string& s)
-{
-    for (size_t i = 0; i < s.size(); i++)
-    {
-        if ((unsigned char)s[i] >= 0x80)
-            return false;
-    }
-
-    return true;
 }
 
 static bool isBlank(const std::string& line)
@@ -380,14 +369,14 @@ bool loadParkingData(
         return false;
 
     // 원본 CSV는 두 번째 줄에 영문 컬럼명(seq, prknglot_nm, ...)이 한 번 더 있다.
-    // 주차장명 칸이 영문뿐이면 컬럼명 줄로 보고 건너뛰고, 아니면 다시 읽도록 되돌린다.
+    // 주차장명 칸이 영문 컬럼명 prknglot_nm이면 건너뛰고, 아니면 다시 읽도록 되돌린다.
     std::streampos dataStart = file.tellg();
 
     if (std::getline(file, line))
     {
         count = splitCsvLine(line, fields, MAX_FIELDS);
 
-        if (!isAscii(getField(fields, count, idx.name)))
+        if (getField(fields, count, idx.name) != ENGLISH_NAME_COLUMN)
             file.seekg(dataStart);
     }
 
@@ -428,17 +417,18 @@ bool loadParkingData(
             p.district = extractDistrict(p.address);
 
         p.capacity = capacity;
-        p.basicFee = hourlyFee(
-            toInt(getField(fields, count, idx.basicFee)),
+        p.basicFee = toInt(getField(fields, count, idx.basicFee));
+        p.hourlyFee = calcHourlyFee(
+            p.basicFee,
             toInt(getField(fields, count, idx.basicTime)),
             toInt(getField(fields, count, idx.addFee)),
             toInt(getField(fields, count, idx.addTime)));
 
         // "유료"인데 요금이 0원이면 무료가 아니라 요금 정보가 빠진 것.
         // 0원으로 두면 요금순 정렬 / Top-N 추천에서 1등이 되어 버린다.
-        if (p.basicFee == 0
+        if (p.hourlyFee == 0
             && getField(fields, count, idx.payType) == "유료")
-            p.basicFee = FEE_UNKNOWN;
+            p.hourlyFee = FEE_UNKNOWN;
         p.openTime = formatTime(getField(fields, count, idx.openTime));
         p.closeTime = formatTime(getField(fields, count, idx.closeTime));
 

@@ -26,8 +26,8 @@ static bool ranksBefore(const HeapEntry& x, const HeapEntry& y)
 {
     comparisonCount++;
 
-    int feeX = x.node->data.basicFee;
-    int feeY = y.node->data.basicFee;
+    int feeX = x.node->data.hourlyFee;
+    int feeY = y.node->data.hourlyFee;
 
     if (feeX != feeY)
         return feeX < feeY;
@@ -112,6 +112,8 @@ bool recommendTopNByFee(
     if (candidates == nullptr || result == nullptr)
         return false;
 
+    clearParkingList(result);
+
     if (topN <= 0 || candidates->head == nullptr)
         return false;
 
@@ -132,7 +134,7 @@ bool recommendTopNByFee(
          current = current->next, order++)
     {
         // 요금 정보가 없는 주차장은 "싸다"고 추천할 수 없으므로 제외
-        if (current->data.basicFee == FEE_UNKNOWN)
+        if (current->data.hourlyFee == FEE_UNKNOWN)
             continue;
 
         HeapEntry entry = { current, order };

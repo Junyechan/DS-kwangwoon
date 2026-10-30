@@ -56,10 +56,10 @@ static void printParking(int index, const Parking& p)
         << "   주차면수: " << p.capacity << "면"
         << " | 1시간 요금: ";
 
-    if (p.basicFee == FEE_UNKNOWN)
+    if (p.hourlyFee == FEE_UNKNOWN)
         std::cout << "정보 없음";
     else
-        std::cout << p.basicFee << "원";
+        std::cout << p.hourlyFee << "원";
 
     std::cout
         << " | 운영시간: " << p.openTime << " ~ " << p.closeTime

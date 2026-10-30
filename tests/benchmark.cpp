@@ -26,7 +26,7 @@ static void fillRandom(ParkingList* list, int n)
         Parking p;
         p.name = "P";
         p.capacity = 1 + std::rand() % 500;
-        p.basicFee = (std::rand() % 51) * 100;
+        p.hourlyFee = (std::rand() % 51) * 100;
         addParking(list, p);
     }
 }
@@ -39,7 +39,7 @@ static void fillDescending(ParkingList* list, int n)
         Parking p;
         p.name = "P";
         p.capacity = 1;
-        p.basicFee = n - i;
+        p.hourlyFee = n - i;
         addParking(list, p);
     }
 }

@@ -59,7 +59,7 @@ static void insertKey(
     table->tails[index] = node;
 }
 
-// key가 일치하는 주차장을 result 리스트에 복사한다.
+// result를 비운 뒤 key가 일치하는 주차장을 복사한다.
 // 해시가 같은 다른 key(충돌)는 문자열 비교로 걸러낸다.
 static bool findKey(
     const HashTable* table,
@@ -69,6 +69,8 @@ static bool findKey(
 {
     if (result == nullptr)
         return false;
+
+    clearParkingList(result);
 
     bool found = false;
     ParkingRefNode* current = table->buckets[hashString(key)];
