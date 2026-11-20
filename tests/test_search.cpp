@@ -87,6 +87,16 @@ static void testDistrictCollision()
     }
     CHECK(ok);
 
+    // 없는 key: 서로 다른 key 1000개가 211개 버킷을 사실상 모두 채우므로
+    // 없는 key도 사용 중인 버킷에 들어간다. 충돌한 key의 결과를 돌려주면 안 된다.
+    bool absentOk = true;
+    for (int i = 0; i < 1000; i++)
+    {
+        if (searchByDistrict("Z" + std::to_string(i), &result) || result.size != 0)
+            absentOk = false;
+    }
+    CHECK(absentOk);
+
     destroySearchIndex();
     destroyParkingList(&list);
     destroyParkingList(&result);
@@ -160,29 +170,47 @@ static void testNameCollision()
     }
     CHECK(ok);
 
+    // 없는 key: 서로 다른 key 1000개가 211개 버킷을 사실상 모두 채우므로
+    // 없는 key도 사용 중인 버킷에 들어간다. 충돌한 key의 결과를 돌려주면 안 된다.
+    bool absentOk = true;
+    for (int i = 0; i < 1000; i++)
+    {
+        if (searchByName("Z" + std::to_string(i), &result) || result.size != 0)
+            absentOk = false;
+    }
+    CHECK(absentOk);
+
     destroySearchIndex();
     destroyParkingList(&list);
     destroyParkingList(&result);
 }
 
-int main()
+static void testEmptyAndNull()
 {
-    testNameSearch();
-    testNameCollision();
-    testDistrictSearch();
-    testDistrictCollision();
+    destroySearchIndex();
     ParkingList list, result;
     createParkingList(&list);
     createParkingList(&result);
 
-    // 빈 리스트
-    buildSearchIndex(&list);
+    buildSearchIndex(&list);  // 빈 리스트
     CHECK(!searchByDistrict("노원구", &result));
     CHECK(result.size == 0);
     buildSearchIndex(nullptr);
     CHECK(!searchByName("A", &result));
 
-    // 동일 자치구 집중 + 해시 충돌 (같은 key 다수)
+    destroySearchIndex();
+    destroyParkingList(&list);
+    destroyParkingList(&result);
+}
+
+static void testConcentratedKey()
+{
+    destroySearchIndex();
+    ParkingList list, result;
+    createParkingList(&list);
+    createParkingList(&result);
+
+    // 동일 자치구 집중 (같은 key 다수)
     for (int i = 0; i < 500; i++)
         addParking(&list, make("P" + std::to_string(i), "노원구"));
     addParking(&list, make("X", "강남구"));
@@ -193,23 +221,67 @@ int main()
     CHECK(result.head->data.name == "P0");  // 원본 순서 유지
     CHECK(searchByDistrict("강남구", &result) && result.size == 1);
     CHECK(!searchByDistrict("없는구", &result) && result.size == 0);
-    CHECK(!searchByDistrict("", &result));
+    CHECK(!searchByDistrict("", &result));  // 빈 key는 검색 불가
+    CHECK(!searchByName("", &result));
     CHECK(searchByName("P499", &result) && result.size == 1);
     CHECK(!searchByName("없음", &result));
 
-    // 결과 독립성: 결과 변경이 원본/색인에 영향 없음
+    destroySearchIndex();
+    destroyParkingList(&list);
+    destroyParkingList(&result);
+}
+
+static void testResultIndependence()
+{
+    destroySearchIndex();
+    ParkingList list, result;
+    createParkingList(&list);
+    createParkingList(&result);
+
+    addParking(&list, make("X", "강남구"));
+    buildSearchIndex(&list);
+
+    // 결과를 변경해도 원본/색인에 영향 없음
     searchByDistrict("강남구", &result);
     result.head->data.name = "CHANGED";
+    CHECK(list.head->data.name == "X");
     CHECK(searchByName("X", &result) && result.size == 1);
 
-    // 재구축 / 중복 해제 안전
+    destroySearchIndex();
+    destroyParkingList(&list);
+    destroyParkingList(&result);
+}
+
+static void testRebuildAndDoubleDestroy()
+{
+    destroySearchIndex();
+    ParkingList list, result;
+    createParkingList(&list);
+    createParkingList(&result);
+
+    addParking(&list, make("A", "노원구"));
     buildSearchIndex(&list);
+    buildSearchIndex(&list);  // 재구축해도 중복 색인되지 않는다
+    CHECK(searchByDistrict("노원구", &result) && result.size == 1);
+
     destroySearchIndex();
-    destroySearchIndex();
+    destroySearchIndex();  // 중복 해제 안전
     CHECK(!searchByDistrict("노원구", &result));
 
     destroyParkingList(&list);
     destroyParkingList(&result);
+}
+
+int main()
+{
+    testEmptyAndNull();
+    testConcentratedKey();
+    testResultIndependence();
+    testRebuildAndDoubleDestroy();
+    testDistrictSearch();
+    testDistrictCollision();
+    testNameSearch();
+    testNameCollision();
 
     std::cout << (failed ? "FAILED\n" : "ALL PASSED\n");
     return failed;
