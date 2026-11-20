@@ -73,7 +73,8 @@
 
 ### 공간
 
-- 참조 노드 2n개 + 버킷 배열 2 x 211 x 2개 포인터(`buckets`, `tails`). **O(n)**.
+- 참조 노드 최대 2n개 + 버킷 배열 2 x 211 x 2개 포인터(`buckets`, `tails`). **O(n)**.
+- 자치구나 주차장명이 **빈 문자열**인 레코드는 해당 key의 색인에서 제외되므로 노드 수가 정확히 2n이 아닐 수 있다. 이런 레코드는 그 key로 검색되지 않고, `searchByDistrict("")`와 `searchByName("")`은 항상 `false`이다.
 
 ## 5. 실제 데이터 측정 (`data/parking.csv`, n = 842)
 
@@ -114,4 +115,20 @@
 | 없는 key / 부분 일치 / 빈 문자열 | `false` + 빈 결과 (이전 결과도 비워짐) |
 | 결과 독립성 | 결과를 수정해도 원본과 인덱스가 그대로 |
 | 안전성 | `result == nullptr`, 인덱스 해제 후 호출, 중복 해제 |
+| 빈 key | 빈 이름/자치구 레코드는 색인 제외, `""` 검색은 `false` |
+| 없는 key 충돌 | 사용 중인 버킷에 들어가는 없는 key 1000개가 모두 `false` + 빈 결과 |
 | 메모리 | AddressSanitizer / UBSan / LeakSanitizer 통과 |
+
+### 실행 방법
+
+```bash
+# 기본 실행
+g++ -std=c++11 -Isrc tests/test_search.cpp src/parking_list.cpp src/search.cpp -o run_test_search
+./run_test_search
+
+# 메모리 오류 / 누수 / 미정의 동작 검사 (AddressSanitizer + UBSan, 누수는 LeakSanitizer가 함께 검사)
+g++ -std=c++11 -g -fsanitize=address,undefined -Isrc tests/test_search.cpp src/parking_list.cpp src/search.cpp -o run_test_search_asan
+./run_test_search_asan
+```
+
+누수나 잘못된 메모리 접근이 있으면 두 번째 실행이 오류를 출력하고 비정상 종료한다.
