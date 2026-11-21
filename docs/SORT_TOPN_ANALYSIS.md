@@ -145,10 +145,10 @@ Heap 배열 N칸 → **O(N)**. 노드 데이터는 복사하지 않고 포인터
 
 ```bash
 # 테스트
-g++ -std=c++11 -Isrc tests/test_all.cpp src/parking_list.cpp src/data_loader.cpp src/search.cpp src/sort.cpp src/recommendation.cpp -o run_tests && ./run_tests
+g++ -std=c++20 -Isrc tests/test_all.cpp src/parking_list.cpp src/data_loader.cpp src/search.cpp src/sort.cpp src/recommendation.cpp -o run_tests && ./run_tests
 
 # 벤치마크
-g++ -std=c++11 -O2 -Isrc tests/benchmark.cpp src/parking_list.cpp src/data_loader.cpp src/sort.cpp src/recommendation.cpp -o benchmark && ./benchmark
+g++ -std=c++20 -O2 -Isrc tests/benchmark.cpp src/parking_list.cpp src/data_loader.cpp src/sort.cpp src/recommendation.cpp -o benchmark && ./benchmark
 ```
 
 프로그램 결과 메뉴에서도 정렬 / 추천 후 비교 횟수를 함께 출력한다 (예: 광진구 35곳 정렬 → `(Merge Sort 비교 …회)`).

@@ -1,5 +1,5 @@
 // 정렬 / Top-N 추천의 비교 횟수와 실행 시간을 n을 키워 가며 측정한다.
-// 빌드: g++ -std=c++11 -O2 -Isrc tests/benchmark.cpp src/parking_list.cpp src/data_loader.cpp src/sort.cpp src/recommendation.cpp -o benchmark
+// 빌드: g++ -std=c++20 -O2 -Isrc tests/benchmark.cpp src/parking_list.cpp src/data_loader.cpp src/sort.cpp src/recommendation.cpp -o benchmark
 #include <iostream>
 #include <iomanip>
 #include <cmath>

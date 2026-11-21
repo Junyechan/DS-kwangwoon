@@ -1,5 +1,5 @@
 // 간단한 단위 테스트 (외부 라이브러리 없이 실행)
-// 빌드: g++ -std=c++11 -Isrc tests/test_all.cpp src/parking_list.cpp src/data_loader.cpp src/search.cpp src/sort.cpp src/recommendation.cpp -o run_tests
+// 빌드: g++ -std=c++20 -Isrc tests/test_all.cpp src/parking_list.cpp src/data_loader.cpp src/search.cpp src/sort.cpp src/recommendation.cpp -o run_tests
 #include <iostream>
 #include <string>
 #include <cmath>
