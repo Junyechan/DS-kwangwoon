@@ -713,12 +713,12 @@ main
 
 ```bash
 # 프로그램
-g++ -std=c++11 -Isrc src/*.cpp -o parking
+g++ -std=c++20 -Isrc src/*.cpp -o parking
 ./parking                      # 기본: data/parking.csv
 ./parking data/다른파일.csv     # 다른 데이터 파일 지정
 
 # 테스트
-g++ -std=c++11 -Isrc tests/test_all.cpp src/parking_list.cpp src/data_loader.cpp src/search.cpp src/sort.cpp src/recommendation.cpp -o run_tests
+g++ -std=c++20 -Isrc tests/test_all.cpp src/parking_list.cpp src/data_loader.cpp src/search.cpp src/sort.cpp src/recommendation.cpp -o run_tests
 ./run_tests
 ```
 

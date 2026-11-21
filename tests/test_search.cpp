@@ -1,3 +1,6 @@
+// 검색(Hash Table 인덱스, 자치구 / 주차장명 검색) 단위 테스트. 
+// 빌드: g++ -std=c++20 -Isrc tests/test_search.cpp src/parking_list.cpp src/search.cpp -o run_test_search
+// 실행: ./run_test_search
 #include <iostream>
 #include <string>
 #include "parking_list.h"
