@@ -18,9 +18,9 @@
 
 공영주차장 데이터는 직접 구현한 Linked List에 저장하고, 자치구와 주차장명을 Key로 하는 Hash Table을 구축하여 검색한다.
 
-검색된 결과는 Linked List Merge Sort를 이용하여 1시간 요금 또는 주차면수를 기준으로 정렬하며, Heap을 이용하여 1시간 요금이 저렴한 Top-N 주차장을 추천한다.
+검색된 결과는 Linked List Merge Sort를 이용하여 1시간 요금 또는 주차면수를 기준으로 정렬하며, Max Heap을 이용하여 1시간 요금이 저렴한 Top-N 주차장을 추천한다.
 
-본 프로젝트의 목적은 실제 공공데이터 처리 과정에 **Linked List, Hash Table, Merge Sort, Heap** 등의 자료구조와 알고리즘을 적용하고 각 구조의 특성과 시간복잡도를 비교·분석하는 것이다.
+본 프로젝트의 목적은 실제 공공데이터 처리 과정에 **Linked List, Hash Table, Merge Sort, Max Heap** 등의 자료구조와 알고리즘을 적용하고 각 구조의 특성과 시간복잡도를 비교·분석하는 것이다.
 
 ---
 
@@ -53,7 +53,7 @@
 원본 데이터에는 자치구와 1시간 요금 컬럼이 별도로 존재하지 않기 때문에 프로그램에서 다음 값을 추가로 생성한다.
 
 - `district`: 주소에서 자치구 추출
-- `hourlyFee`: 기본·추가 요금과 적용 시간을 이용하여 계산한 1시간 요금
+- `hourlyFee`: 기본·추가 요금과 적용 시간을 이용하여 계산한 1시간 환산 요금
 
 ## 데이터 전처리
 
@@ -116,7 +116,7 @@ docs/PARKING_DATA_ANALYSIS.md
           ↓
  ┌────────┴────────┐
  ↓                 ↓
-Merge Sort        Heap
+Merge Sort      Max Heap
  ↓                 ↓
 정렬 결과       Top-N 추천
  └────────┬────────┘
@@ -190,17 +190,23 @@ Hash Table에는 `Parking` 객체 전체를 중복 저장하지 않고 원본 Li
 
 ### 시간복잡도
 
-검색 결과 수를 `k`라고 할 경우 평균적으로
+현재 구현에서는 같은 Key를 가진 주차장도 각각 하나의 `ParkingRefNode`로 Hash Table에 저장된다.
+
+조회할 Bucket에서 탐색해야 하는 체인 길이를 `C`라고 하면 검색 비용은 평균적으로 다음과 같이 표현할 수 있다.
 
 ```text
-O(1 + k)
+O(1 + C)
 ```
 
-이다.
+여기서 `C`에는 검색 결과에 해당하는 노드와 같은 Bucket에 충돌한 다른 Key의 노드가 포함된다.
 
-Hash Table 조회 자체는 평균 O(1)이지만 검색된 `k`개의 주차장을 결과 Linked List로 복사하기 위해 O(k)가 추가된다.
+Hash Table의 적재율이 일정하고 충돌이 적은 일반적인 경우, 검색 결과 수를 `r`이라고 하면 결과를 반환하는 비용까지 포함하여 다음과 같이 볼 수 있다.
 
-모든 Key가 하나의 Bucket에 집중되는 최악의 경우 검색 시간은 O(n)이 될 수 있다.
+```text
+O(1 + r)
+```
+
+모든 데이터가 하나의 Bucket에 집중되는 최악의 경우에는 O(n)이 될 수 있다.
 
 자세한 분석은 다음 문서에서 확인할 수 있다.
 
@@ -219,35 +225,41 @@ docs/SEARCH_HASH_ANALYSIS.md
 
 요금 정보가 없는 주차장(`FEE_UNKNOWN`)은 요금 정렬 시 뒤쪽으로 이동한다.
 
+동일한 정렬값을 가지는 데이터는 기존 입력 순서를 유지한다.
+
 ### 선택 이유
 
 Linked List에서는 임의 위치 접근이 어렵기 때문에 배열 기반 정렬 알고리즘보다 노드 연결을 변경하는 Merge Sort가 적합하다.
 
-검색 결과가 `m`개라면 시간복잡도는
+Merge 과정에서는 `ParkingNode` 자체를 복사하거나 새로 생성하지 않고 `next` 연결 관계를 변경한다.
+
+검색 결과가 `m`개라면 시간복잡도는 다음과 같다.
 
 ```text
 O(m log m)
 ```
 
-이다.
-
 ---
 
-## 5.4 Heap
+## 5.4 Max Heap
 
 검색된 주차장 중 `hourlyFee`가 가장 낮은 Top-N 주차장을 선택한다.
 
-검색 결과가 `m`개이고 사용자가 요청한 추천 개수가 `k`개라면 최대 `k`개의 후보만 Heap에 유지한다.
+검색 결과가 `m`개이고 사용자가 요청한 추천 개수가 `k`개라면 최대 `k`개의 후보만 Max Heap에 유지한다.
 
 ```text
 검색 결과 m개
       ↓
-크기 k의 Heap 유지
+크기 k의 Max Heap 유지
       ↓
 저렴한 Top-k 선택
 ```
 
-요금 정보가 없는 주차장은 추천 대상에서 제외된다.
+Max Heap의 루트에는 현재 선택된 후보 중 가장 비싼 주차장이 위치한다.
+
+새로운 주차장의 요금이 Heap의 루트보다 낮으면 루트를 교체하여 항상 가장 저렴한 `k`개의 후보만 유지한다.
+
+요금 정보가 없는 주차장(`FEE_UNKNOWN`)은 추천 대상에서 제외한다.
 
 ### 시간복잡도
 
@@ -255,9 +267,9 @@ O(m log m)
 O(m log k)
 ```
 
-전체 `m`개를 모두 정렬하는 O(m log m) 방식 대신 필요한 `k`개의 후보만 관리한다.
+전체 `m`개의 데이터를 모두 정렬하는 O(m log m) 방식 대신 필요한 `k`개의 후보만 관리한다.
 
-Merge Sort 및 Heap에 대한 자세한 분석은 다음 문서에서 확인할 수 있다.
+Merge Sort 및 Max Heap에 대한 자세한 분석은 다음 문서에서 확인할 수 있다.
 
 ```text
 docs/SORT_TOPN_ANALYSIS.md
@@ -289,7 +301,7 @@ struct Parking
 ```
 
 - `basicFee`: CSV에 기록된 기본 주차 요금
-- `hourlyFee`: 1시간 주차 시 계산되는 요금
+- `hourlyFee`: 기본 및 추가 요금 정보를 이용해 계산한 1시간 환산 요금
 - `FEE_UNKNOWN`: 유료 주차장이지만 요금 정보를 계산할 수 없는 경우
 
 Linked List는 다음 구조를 사용한다.
@@ -398,7 +410,7 @@ src/recommendation.cpp
 
 역할:
 
-- Heap 기반 Top-N 추천
+- Max Heap 기반 Top-N 추천
 - 1시간 요금 기준 후보 관리
 - 비교 횟수 측정
 
@@ -423,7 +435,9 @@ src/main.cpp
 
 # 8. 콘솔 메뉴
 
-프로그램 실행 후 메인 메뉴가 출력된다.
+프로그램 실행 시 `data/parking.csv`를 읽어 데이터를 전처리한 뒤 메인 메뉴가 출력된다.
+
+현재 데이터 기준으로 동일 주차장코드를 병합한 **842개의 주차장 데이터**가 로딩된다.
 
 ```text
 [메인 메뉴]
@@ -443,7 +457,9 @@ src/main.cpp
 0. 메인 메뉴로
 ```
 
-정렬과 추천 실행 후에는 Merge Sort 또는 Heap에서 발생한 비교 횟수도 함께 출력한다.
+정렬과 추천 실행 후에는 Merge Sort 또는 Max Heap에서 발생한 비교 횟수도 함께 출력한다.
+
+주차장명 검색은 부분 문자열 검색이 아닌 **정확 일치 검색**을 사용한다.
 
 ---
 
@@ -456,6 +472,7 @@ DS-kwangwoon/
 ├── .gitignore
 │
 ├── .github/
+│   ├── Issue Prototype.md
 │   └── pull_request_template.md
 │
 ├── src/
@@ -500,22 +517,24 @@ DS-kwangwoon/
 | 조장 / 통합 | 프로젝트 구조 설계, Parking 및 ParkingList, main.cpp, 전체 기능 통합, GitHub 관리 |
 | 데이터 | 데이터 컬럼 분석, 전처리 및 Data Loader |
 | 검색 | Hash Table, 자치구 및 주차장명 검색 |
-| 정렬 / 추천 | Merge Sort 및 Heap 기반 Top-N 추천 |
+| 정렬 / 추천 | Merge Sort 및 Max Heap 기반 Top-N 추천 |
 | 발표 / 테스트 | 기능 테스트, 문서 정리, 발표자료 작성 및 발표 |
 
 ---
 
 # 11. 주요 시간복잡도
 
-`n`은 전체 주차장 수, `m`은 검색 결과 수, `k`는 Top-N 추천 개수이다.
+`n`은 전체 주차장 수, `m`은 검색 결과 수, `k`는 Top-N 추천 개수이며, `C`는 Hash Table에서 조회한 Bucket의 체인 길이이다.
 
 | 기능 | 시간복잡도 |
 |---|---:|
 | 전체 데이터 순회 | O(n) |
 | Hash Table 구축 | O(n) |
-| Hash 검색 | 평균 O(1 + k), 최악 O(n) |
+| Hash 검색 | 평균 O(1 + C), 최악 O(n) |
 | Merge Sort | O(m log m) |
-| Heap Top-N 추천 | O(m log k) |
+| Max Heap Top-N 추천 | O(m log k) |
+
+Hash 검색은 적재율이 일정하고 충돌이 적은 일반적인 경우 반환되는 검색 결과 수 `r`을 포함하여 O(1 + r)로 볼 수 있다.
 
 ---
 
@@ -529,6 +548,12 @@ DS-kwangwoon/
 
 ```bash
 g++ -std=c++20 -Isrc src/*.cpp -o parking
+```
+
+경고를 포함하여 확인하려면 다음과 같이 빌드할 수 있다.
+
+```bash
+g++ -std=c++20 -Wall -Wextra -pedantic -Isrc src/*.cpp -o parking
 ```
 
 ## 실행
@@ -555,7 +580,9 @@ data/parking.csv
 
 # 13. 테스트
 
-## 전체 기능 테스트
+각 모듈의 정상 동작과 주요 예외 상황을 확인하기 위한 테스트 코드를 제공한다.
+
+## 통합 모듈 테스트
 
 ```bash
 g++ -std=c++20 -Isrc \
@@ -570,6 +597,24 @@ src/recommendation.cpp \
 ./run_tests
 ```
 
+`test_all.cpp`에서는 다음 항목을 포함하여 확인한다.
+
+- 빈 리스트 및 단일 노드 정렬
+- 1시간 요금 오름차순 정렬
+- 주차면수 내림차순 정렬
+- 동일 정렬값의 순서 유지
+- `FEE_UNKNOWN` 처리
+- Data Loader 및 검색 연동
+- Top-N 추천
+- 실제 `data/parking.csv` 로딩
+- 2,181행에서 842개 주차장으로 병합되는지 확인
+
+모든 검사가 통과하면 다음과 같이 출력된다.
+
+```text
+모든 테스트 통과
+```
+
 ## Hash Table 검색 테스트
 
 ```bash
@@ -582,15 +627,49 @@ src/search.cpp \
 ./run_test_search
 ```
 
-정상적으로 모든 테스트가 통과하면 다음과 같이 출력된다.
+검색 전용 테스트에서는 다음 항목을 확인한다.
+
+- 자치구 및 주차장명 검색
+- 동일 Key 다건 검색
+- Hash 충돌
+- 존재하지 않는 Key
+- 빈 문자열
+- `nullptr`
+- 검색 결과와 원본 데이터의 독립성
+- 검색 인덱스 재구축
+- 중복 메모리 해제
+
+모든 검사가 통과하면 다음과 같이 출력된다.
 
 ```text
 ALL PASSED
 ```
 
+## Sanitizer 검사
+
+동적 메모리와 Undefined Behavior를 확인하기 위해 AddressSanitizer와 UndefinedBehaviorSanitizer를 사용할 수 있다.
+
+```bash
+g++ -std=c++20 -g \
+-fsanitize=address,undefined \
+-fno-omit-frame-pointer \
+-Isrc \
+tests/test_all.cpp \
+src/parking_list.cpp \
+src/data_loader.cpp \
+src/search.cpp \
+src/sort.cpp \
+src/recommendation.cpp \
+-o run_tests_asan
+
+./run_tests_asan
+```
+
+최종 테스트에서는 Sanitizer 오류 없이 모든 테스트가 통과함을 확인하였다.
+
 ---
 
-# 14. 개발 환경
+# 14. 개발 및 테스트 환경
 
 - Language: C++20
 - Compiler: GNU g++
@@ -598,7 +677,8 @@ ALL PASSED
 - Repository: GitHub
 - Data: Seoul Data Hub
 - Interface: Console
-- Target Environment: Ubuntu / Windows
+- Target Environment: Ubuntu 24.04 LTS
+- Local Test Environment: Windows + WSL Ubuntu
 
 ---
 
@@ -615,7 +695,7 @@ Hash Table 검색
       ↓
 검색 결과 Linked List
       ↓
-Merge Sort / Heap
+Merge Sort / Max Heap
       ↓
 정렬 및 Top-N 추천
 ```
@@ -625,6 +705,6 @@ Merge Sort / Heap
 - Linked List를 이용한 동적 데이터 관리
 - Hash Table을 이용한 빠른 정확 일치 검색
 - Merge Sort를 이용한 Linked List 정렬
-- Heap을 이용한 효율적인 Top-N 선택
+- Max Heap을 이용한 효율적인 Top-N 선택
 
 을 구현하였다.
