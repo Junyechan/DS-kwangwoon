@@ -1,4 +1,4 @@
-// 검색(Hash Table) 측정: 버킷 체인 분포와 searchByName 조회 시간을 순차 탐색과 비교한다.
+// 검색(Hash Table) 측정: 버킷 체인 분포와 searchByName / searchByDistrict 조회 시간을 순차 탐색과 비교한다.
 // 빌드: g++ -std=c++20 -O2 -Isrc tests/benchmark_search.cpp src/parking_list.cpp src/data_loader.cpp src/search.cpp -o benchmark_search
 // 실행: ./benchmark_search [csv 경로]   (기본값 data/parking.csv)
 #include <iostream>
@@ -12,6 +12,8 @@
 
 typedef std::chrono::steady_clock Clock;
 
+// 주의: search.cpp의 TABLE_SIZE와 hashString()은 static이라 여기서 호출할 수 없어 복사해 두었다.
+//       search.cpp에서 버킷 수나 해시 함수를 바꾸면 아래 두 곳도 반드시 같이 바꿔야 체인 분포가 맞는다.
 static const int TABLE_SIZE = 211;   // search.cpp와 같은 값
 static const int REPEAT = 20000;
 
@@ -49,7 +51,45 @@ static void chainStats(const char* label, const ParkingList* list, bool byName)
               << " | 사용 버킷 " << used << "/" << TABLE_SIZE
               << " | 평균 체인 길이 " << std::fixed << std::setprecision(2)
               << (double)total / TABLE_SIZE
+              << " (사용 버킷 기준 " << (used ? (double)total / used : 0.0) << ")"
               << " | 가장 긴 체인 " << longest << "\n";
+}
+
+// Hash Table 검색과 순차 탐색(같은 결과 복사 포함)의 1회 평균 시간(us)을 출력한다.
+static void timeSearch(const char* label, const ParkingList* list, const std::string& target,
+                       bool byName, long long* sink)
+{
+    ParkingList result;
+    createParkingList(&result);
+
+    Clock::time_point t0 = Clock::now();
+    for (int i = 0; i < REPEAT; i++)
+    {
+        if (byName) searchByName(target, &result);
+        else        searchByDistrict(target, &result);
+        *sink += result.size;
+    }
+    double hashUs = std::chrono::duration<double, std::micro>(Clock::now() - t0).count() / REPEAT;
+
+    t0 = Clock::now();
+    for (int i = 0; i < REPEAT; i++)
+    {
+        clearParkingList(&result);
+        for (ParkingNode* p = list->head; p != nullptr; p = p->next)
+            if ((byName ? p->data.name : p->data.district) == target)
+                addParking(&result, p->data);
+        *sink += result.size;
+    }
+    double seqUs = std::chrono::duration<double, std::micro>(Clock::now() - t0).count() / REPEAT;
+
+    std::cout << std::fixed << std::setprecision(2)
+              << "[" << label << "] 검색 대상: " << target
+              << " (결과 " << result.size << "건, 반복 " << REPEAT << "회)\n"
+              << "  Hash Table   : " << hashUs << " us\n"
+              << "  순차 탐색    : " << seqUs << " us\n"
+              << "  배율         : " << seqUs / hashUs << "x\n";
+
+    destroyParkingList(&result);
 }
 
 int main(int argc, char* argv[])
@@ -75,39 +115,17 @@ int main(int argc, char* argv[])
 
     buildSearchIndex(&list);
 
-    ParkingList result;
-    createParkingList(&result);
-
     long long sink = 0;   // 최적화로 반복문이 사라지지 않게 결과를 누적
 
-    Clock::time_point t0 = Clock::now();
-    for (int i = 0; i < REPEAT; i++)
-    {
-        searchByName(target, &result);
-        sink += result.size;
-    }
-    double hashUs = std::chrono::duration<double, std::micro>(Clock::now() - t0).count() / REPEAT;
+    // 주차장명: 리스트 맨 끝 이름 (순차 탐색에 가장 불리한 경우)
+    timeSearch("주차장명", &list, target, true, &sink);
 
-    t0 = Clock::now();
-    for (int i = 0; i < REPEAT; i++)
-    {
-        clearParkingList(&result);
-        for (ParkingNode* p = list.head; p != nullptr; p = p->next)
-            if (p->data.name == target)
-                addParking(&result, p->data);
-        sink += result.size;
-    }
-    double seqUs = std::chrono::duration<double, std::micro>(Clock::now() - t0).count() / REPEAT;
+    // 자치구: 강남구는 송파구와 같은 버킷에 충돌한다 (실제 데이터에서 가장 긴 체인).
+    timeSearch("자치구", &list, "강남구", false, &sink);
 
-    std::cout << std::fixed << std::setprecision(2)
-              << "검색 대상: " << target << " (반복 " << REPEAT << "회)\n"
-              << "Hash Table searchByName : " << hashUs << " us\n"
-              << "순차 탐색(복사 포함)    : " << seqUs << " us\n"
-              << "배율                    : " << seqUs / hashUs << "x\n"
-              << "(checksum " << sink << ")\n";
+    std::cout << "(checksum " << sink << ")\n";
 
     destroySearchIndex();
-    destroyParkingList(&result);
     destroyParkingList(&list);
     return 0;
 }
